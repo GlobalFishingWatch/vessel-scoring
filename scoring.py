@@ -66,6 +66,49 @@ def optimize_window_size(xtrain, xcross):
     return min_window
 
 
+def optimize_multi_window_sizes(xtrain, xcross):
+    print "Fitting an optimal window size set for avg/stddev columns"
+    print "For now uses a set from minimum window size up to X"
+
+    all_windows = np.array(get_windows(xtrain))
+    err_train = np.zeros(all_windows.shape[0])
+    err_cross = np.zeros(all_windows.shape[0])
+
+    windows = []
+    for idx, window in enumerate(all_windows):
+        windows.append(window)
+        print "%s: Fitting..." % windows,
+        sys.stdout.flush()
+        classifier = fit_score(xtrain, windows)
+        print "Scoring...",
+        sys.stdout.flush()
+        xtrain['score'][:] = predict(classifier, xtrain, windows)
+        xcross['score'][:] = predict(classifier, xcross, windows)
+        print "Calc.err...",
+        sys.stdout.flush()
+        xtrainclassified = xtrain[xtrain["classification"] != np.Inf]
+        # Note that we are using accuracy rather than squared error as
+        # our metric here.
+        err_train[idx] = 1.0 * np.sum(((xtrainclassified['score'] > 0.5) != xtrainclassified['classification']))/xtrainclassified.shape[0]
+        xcrossclassified = xcross[xcross["classification"] != np.Inf]
+        err_cross[idx] = 1.0 * np.sum(((xcrossclassified['score'] > 0.5) != xcrossclassified['classification']))/xcrossclassified.shape[0]
+        print "train=%s, cross=%s" % (err_train[idx], err_cross[idx])
+        sys.stdout.flush()
+
+    best_windows = windows[:np.argmin(err_cross)+1]
+
+    matplotlib.pyplot.figure(figsize=(20,5))
+    matplotlib.pyplot.plot(windows, err_train, label="err train")
+    matplotlib.pyplot.plot(windows, err_cross, label="err cross")
+    matplotlib.pyplot.legend()
+    matplotlib.pyplot.xlabel("Max window size in seconds")
+    matplotlib.pyplot.show()
+
+    print "Best window sizes: %s" % best_windows
+
+    return best_windows
+
+
 def train_and_score(xtrain, xtest, windows):
     classifier = fit_score(xtrain, windows)
     xtest['score'][:] = predict(classifier, xtest, windows)

@@ -29,4 +29,19 @@ def graph_score(x, col):
     overlap = total - non_overlap
     error = overlap / total
 
-    print "False positives given cutoff at 0.5: %s%%" % (error * 100)
+    print "Error (overlap) above cutoff of 0.5: %s%%" % (error * 100)
+
+    #
+    positives = (xclassified[col]  >= 0.5)
+    true_positives = ((xclassified['classification'] == 1) & positives).sum()
+    false_positives = ((xclassified['classification'] == 0) & positives).sum()
+    false_negatives = ((xclassified['classification'] == 1) & ~positives).sum()
+    true_negatives = ((xclassified['classification'] == 0) & ~positives).sum()
+    print "For cutoff of 0.5"
+    print "True positives", true_positives
+    print "False positives", false_positives
+    print "True negatives", true_negatives
+    print "False negatives", false_negatives
+    print "accuracy", (true_positives + true_negatives) / float(len(xclassified))
+    print "precision", true_positives / float(true_positives + false_positives)
+    print "recall", true_positives / float(true_positives + false_negatives)

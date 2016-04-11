@@ -48,38 +48,35 @@ def load_dataset(path, size = 20000):
 
     return x, xtrain, xcross, xtest
 
-MATCHED_SAMPLES = True
+def _subsample_matched(x0, mmsi, n):
+    # Create a mask that is true whenever mmsi is one of the mmsi
+    # passed in
+    mask = np.zeros([len(x0)], dtype=bool)
+    for m in mmsi:
+        mask |= (x0['mmsi'] == m)
+    x = x0[mask]
+    # Pick half the values from fishy rows and half from nonfishy rows.
+    f = fishy(x)
+    nf = nonfishy(x)
+    f = np.random.choice(f, n//2, replace=False)
+    nf = np.random.choice(nf, n//2, replace=False)
+    ss = np.concatenate([f, nf])
+    np.random.shuffle(ss)
+    return ss
 
-if MATCHED_SAMPLES:
-    def _subsample(x0, mmsi, n):
-        # Create a mask that is true whenever mmsi is one of the mmsi
-        # passed in
-        mask = np.zeros([len(x0)], dtype=bool)
-        for m in mmsi:
-            mask |= (x0['mmsi'] == m)
-        x = x0[mask]
-        # Pick half the values from fishy rows and half from nonfishy rows.
-        f = fishy(x)
-        nf = nonfishy(x)
-        f = np.random.choice(f, n//2, replace=False)
-        nf = np.random.choice(nf, n//2, replace=False)
-        ss = np.concatenate([f, nf])
-        np.random.shuffle(ss)
-        return ss
-else:
-    def _subsample(x0, mmsi, n):
-        # Create a mask that is true whenever mmsi is one of the mmsi
-        # passed in
-        mask = np.zeros([len(x0)], dtype=bool)
-        for m in mmsi:
-            mask |= (x0['mmsi'] == m)
-        x = x0[mask]
-        # Pick half the values from fishy rows and half from nonfishy rows.
-        ss = np.random.choice(x, n, replace=False)
-        np.random.shuffle(ss)
-        return ss
+def _subsample_proportional(x0, mmsi, n):
+    # Create a mask that is true whenever mmsi is one of the mmsi
+    # passed in
+    mask = np.zeros([len(x0)], dtype=bool)
+    for m in mmsi:
+        mask |= (x0['mmsi'] == m)
+    x = x0[mask]
+    # Pick half the values from fishy rows and half from nonfishy rows.
+    ss = np.random.choice(x, n, replace=False)
+    np.random.shuffle(ss)
+    return ss
 
-def load_dataset_by_vessel(path, size = 20000):
+def load_dataset_by_vessel(path, size = 20000, matched=True):
     # Load a dataset and extract a train, cross validation and test dataset
     #
     # * We need roughly the same amount of fishing and non-fishing
@@ -93,6 +90,8 @@ def load_dataset_by_vessel(path, size = 20000):
     x = np.load(path)['x']
 
     x = x[np.isinf(x['classification']) != True]
+
+    print "fraction fishing:", x['classification'].sum() / float(len(x))
 
     all_windows = get_windows(x)
 
@@ -109,8 +108,10 @@ def load_dataset_by_vessel(path, size = 20000):
     np.random.shuffle(mmsi)
     n_mmsi = len(mmsi)
 
-    xtrain = _subsample(x, mmsi[:n_mmsi//2], size//2)
-    xcross = _subsample(x, mmsi[n_mmsi//2:3*n_mmsi//4], size//4)
-    xtest = _subsample(x, mmsi[3*n_mmsi//4:], size//4)
+    subsample = _subsample_matched if matched else _subsample_proportional
+
+    xtrain = subsample(x, mmsi[:n_mmsi//2], size//2)
+    xcross = _subsample_proportional(x, mmsi[n_mmsi//2:3*n_mmsi//4], size//4)
+    xtest = _subsample_proportional(x, mmsi[3*n_mmsi//4:], size//4)
 
     return x, xtrain, xcross, xtest

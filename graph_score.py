@@ -43,5 +43,8 @@ def graph_score(x, col):
     print "True negatives", true_negatives
     print "False negatives", false_negatives
     print "accuracy", (true_positives + true_negatives) / float(len(xclassified))
-    print "precision", true_positives / float(true_positives + false_positives)
-    print "recall", true_positives / float(true_positives + false_negatives)
+    p = true_positives / float(true_positives + false_positives)
+    print "precision", p
+    r = true_positives / float(true_positives + false_negatives)
+    print "recall", r
+    print "f1", 2 * p * r / (p + r)

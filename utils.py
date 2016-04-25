@@ -94,3 +94,10 @@ def get_cols_by_name(data, names, dtype=float, **kwargs):
         name = name.format(**kwargs)
         features[:,i] = data[name]
     return features
+
+def clone_subset(x, dtype):
+    """copy only the portions of x in dtype to a new array"""
+    new = np.zeros(x.shape, dtype=dtype)
+    for name in dtype.names:
+        new[name] = x[name]
+    return new

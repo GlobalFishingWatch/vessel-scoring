@@ -6,7 +6,7 @@ import math
 
 names=set()
 classifications = {}
-with open("classification-hourlyResultsAll.txt") as f:
+with open(sys.argv[2]) as f:
     for row in csv.DictReader(f, skipinitialspace=True):
         mmsi = row['mmsi'] = int(row['mmsi'])
         if mmsi not in classifications: classifications[mmsi] = {}
@@ -16,8 +16,8 @@ with open("classification-hourlyResultsAll.txt") as f:
         names.add(row['classification'])
 
 
-with gpsdio.open("classified.msg", "w") as outf:
-    with gpsdio.open("tracks.msg") as f:
+with gpsdio.open(sys.argv[3], "w") as outf:
+    with gpsdio.open(sys.argv[1]) as f:
         c = 0
         for row in f:
             mmsiclass = classifications[int(row['mmsi'])]

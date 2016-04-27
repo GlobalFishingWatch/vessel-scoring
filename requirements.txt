@@ -37,3 +37,4 @@ six==1.10.0
 terminado==0.6
 tornado==4.3
 traitlets==4.0.0
+gpsdio==0.0.7

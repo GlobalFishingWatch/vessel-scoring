@@ -1,6 +1,6 @@
 import numpy as np
 from sklearn.linear_model import LogisticRegression
-from utils import get_polynomial_cols, zigmoid
+from vessel_scoring.utils import get_polynomial_cols, zigmoid
 
 
 def make_features(data, windows, order, cross):
@@ -58,9 +58,9 @@ class LogisticModel(LogisticRegression):
         return make_features(data, self.windows, self.order, self.cross)
 
     def dump_dict(self):
-        return {'coef' : self.coef_,
-                'intercept' : self.intercept_,
-                'windows' : self.windows,
+        return {'coef' : [list(item) for item in self.coef_],
+                'intercept' : list(self.intercept_),
+                'windows' : list(self.windows),
                 'order' : self.order,
                 'cross' : self.cross}
 

@@ -1,6 +1,6 @@
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
-from utils import get_polynomial_cols
+from vessel_scoring.utils import get_polynomial_cols
 
 
 class RandomForestModel(RandomForestClassifier):

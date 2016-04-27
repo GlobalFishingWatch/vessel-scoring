@@ -8,3 +8,6 @@ lib/
 classification-hourlyResultsAll.txt
 *.csv
 *.msg
+datasets/
+env/
+models/

@@ -5,9 +5,7 @@ import math
 import scipy.optimize
 import matplotlib.pyplot
 import sys
-import graph_score
-import graph_precall
-from utils import *
+from vessel_scoring.utils import *
 
 def load_dataset(path, size = 20000):
     # Load a dataset and extract a train, cross validation and test dataset

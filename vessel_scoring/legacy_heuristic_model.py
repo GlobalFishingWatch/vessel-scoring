@@ -1,5 +1,5 @@
 import numpy as np
-from utils import get_cols_by_name
+from vessel_scoring.utils import get_cols_by_name
 
 COURSE_STD = 0
 SPEED_STD = 1

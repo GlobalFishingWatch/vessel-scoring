@@ -101,3 +101,4 @@ def clone_subset(x, dtype):
     for name in dtype.names:
         new[name] = x[name]
     return new
+

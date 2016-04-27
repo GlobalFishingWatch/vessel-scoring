@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-import utils
+from vessel_scoring import utils
 import numpy as np
 from sklearn import metrics
 from IPython.core.display import display, HTML

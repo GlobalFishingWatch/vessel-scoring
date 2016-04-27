@@ -5,7 +5,6 @@ Vessel statistics
 import gpsdio
 import sys
 import datetime
-import rolling_measures
 import numpy
 from numpy import *
 from numpy.lib.recfunctions import *
@@ -57,11 +56,3 @@ def add_measures(x, windowSizes = [1800, 3600, 10800, 21600, 43200, 86400], verb
                 print "XXXXXX", start_idx, end_idx + 1
 
     return x
-
-if __name__ == '__main__':
-    numpy.savez_compressed(
-        sys.argv[2],
-        x=add_measures(
-            numpy.load(sys.argv[1])['x'],
-            verbose=True,
-            err=sys.stderr))

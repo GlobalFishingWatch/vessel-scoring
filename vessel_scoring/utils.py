@@ -56,11 +56,16 @@ def cached(path):
 def is_fishy(x):
     return x["classification"] >= 0.5
 
+def is_ambiguous(x):
+    return abs(x["classification"] - 0.5) < 0.15 # ~between 1/3 and 2/3
+
 def fishy(x):
     return x[is_fishy(x)]
 
 def nonfishy(x):
     return x[~is_fishy(x)]
+
+
 
 def get_polynomial_cols(x, windows):
     colnames = []

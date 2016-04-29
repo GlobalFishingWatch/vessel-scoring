@@ -20,7 +20,8 @@ def load_dataset(path, size = 20000):
 
     x = np.load(path)['x']
 
-    x = x[np.isinf(x['classification']) != True]
+    is_invalid = np.isinf(x['classification']) | is_ambiguous(x)
+    x = x[~is_invalid]
 
     all_windows = get_windows(x)
 

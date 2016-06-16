@@ -93,10 +93,20 @@ def evaluate_model(model, test_data, name=None):
     error = overlap / total
 
 
-def compare_models(models, test_data):
+def compare_metrics(models, test_data, threshold=0.5):
+    labels = utils.is_fishy(test_data)
+    for (name, mdl) in models:
+        predicted = (mdl.predict_proba(test_data)[:,1] > threshold)
+        print(name)
+        print(metrics.classification_report(labels, predicted))
+
+
+def compare_auc(models, test_data):
+    import matplotlib.pyplot as plt
+
     is_fishy = utils.is_fishy(test_data)
 
-    f, (a1, a2) = plt.subplots(2, 1, figsize=(20,20))
+    f, a1 = plt.subplots(1, 1, figsize=(16,8))
 
     for (name, mdl) in models:
         score = mdl.predict_proba(test_data)[:,1]
@@ -106,6 +116,15 @@ def compare_models(models, test_data):
     a1.set_xlabel('False Positive Rate')
     a1.set_ylabel('True Positive Rate')
     a1.legend(loc="lower right")
+
+    plt.show()
+
+def compare_pr(models, test_data):
+    import matplotlib.pyplot as plt
+
+    is_fishy = utils.is_fishy(test_data)
+
+    f, (a2) = plt.subplots(1, 1, figsize=(20,20))
 
     for (name, mdl) in models:
         score = mdl.predict_proba(test_data)[:,1]

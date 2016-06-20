@@ -60,3 +60,12 @@ target/
 .idea/
 ignore/
 venv/
+
+# Tensorflow temp files
+dumps/
+
+# Jupyter notebook checkoints
+.ipynb_checkpoints
+
+# Stuff Stored Separately
+datasets/

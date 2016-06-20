@@ -5,6 +5,7 @@ import vessel_scoring.utils
 import vessel_scoring.data
 import vessel_scoring.evaluate_model
 import vessel_scoring.add_measures
+import vessel_scoring.colspec
 
 import json
 import os.path
@@ -13,33 +14,58 @@ import importlib
 import datetime
 
 
-untrained_models = [
-    ('Logistic',               vessel_scoring.logistic_model.LogisticModel(windows=[43200], order=6)),
-    ('Logistic opt MSE',       vessel_scoring.logistic_model.LogisticModel(windows=[43200], order=4, cross=3)),
-#     ('Logistic (MW)',        vessel_scoring.logistic_model.LogisticModel(windows=[1800, 3600, 10800, 21600, 43200, 86400], order=6)),
-#     ('Logistic (MW/cross3)', vessel_scoring.logistic_model.LogisticModel(windows=[1800, 3600, 10800, 21600, 43200, 86400], order=6, cross=2)),
-    ('Random Forest',          vessel_scoring.random_forest_model.RandomForestModel(windows=[43200])),
-#     ('Random Forest (MW)',   vessel_scoring.random_forest_model.RandomForestModel(windows=[1800, 3600, 10800, 21600, 43200, 86400])),
-    ('Legacy',                 vessel_scoring.legacy_heuristic_model.LegacyHeuristicModel(window=3600)),
-#     ("Legacy (3 Hour)",      vessel_scoring.legacy_heuristic_model.LegacyHeuristicModel(window=10800)),
-    ("Legacy (12 Hour)",       vessel_scoring.legacy_heuristic_model.LegacyHeuristicModel(window=43200)),
-#     ("Legacy (24 Hour)",     vessel_scoring.legacy_heuristic_model.LegacyHeuristicModel(window=86400)),  
-]
+all_data = ['kristina_trawl', 'kristina_longliner', 'kristina_ps'] + ['slow-transits'] * 10
+colspec={"windows": vessel_scoring.colspec.Colspec.windows}
 
-def get_default_training_data(transit_weight = 10):
-    _, xtrain_trawl, xcross_trawl, xtest_trawl = vessel_scoring.data.load_dataset_by_vessel('datasets/kristina_trawl.measures.npz')
-    _, xtrain_lline, xcross_lline, xtest_lline = vessel_scoring.data.load_dataset_by_vessel('datasets/kristina_longliner.measures.npz')
-    _, xtrain_pseine, xcross_pseine, xtest_pseine = vessel_scoring.data.load_dataset_by_vessel('datasets/kristina_ps.measures.npz')
+untrained_models = {
+    'Logistic':               {'model': vessel_scoring.logistic_model.LogisticModel(colspec=colspec, order=6), 'data': all_data},
 
-    _, xtrain_tran, xcross_tran, xtest_tran = vessel_scoring.data.load_dataset_by_vessel('datasets/slow-transits.measures.npz', even_split=False)
-    xtrain_tran = vessel_scoring.utils.clone_subset(xtrain_tran, xtrain_trawl.dtype)
-    xcross_tran = vessel_scoring.utils.clone_subset(xcross_tran, xtrain_trawl.dtype)
-    xtest_tran = vessel_scoring.utils.clone_subset(xtest_tran, xtrain_trawl.dtype)
+    'Logistic--Longliner':    {'model': vessel_scoring.logistic_model.LogisticModel(colspec=colspec, order=6),
+                               'data': ['kristina_longliner'] + ['slow-transits'] * 10},
+    'Logistic--Trawler':      {'model': vessel_scoring.logistic_model.LogisticModel(colspec=colspec, order=6),
+                               'data': ['kristina_trawl'] + ['slow-transits'] * 10},
 
-    xtrain = numpy.concatenate([xtrain_trawl, xtrain_lline, xtrain_pseine] + [xtrain_tran] * transit_weight)
-    xcross = numpy.concatenate([xcross_trawl, xcross_lline, xcross_pseine] + [xcross_tran] * transit_weight)
+    # 'Logistic--Purse seine OLD': {'model': vessel_scoring.logistic_model.LogisticModel(colspec=colspec, order=6),
+    #                               'data': ['kristina_ps'] + ['slow-transits'] * 10},
 
-    return numpy.concatenate([xtrain, xcross])
+    'Logistic--Purse seine':  {
+        'model': vessel_scoring.logistic_model.LogisticModel(
+            colspec={
+                "windows": vessel_scoring.colspec.Colspec.windows,
+                "window_measures": vessel_scoring.colspec.Colspec.window_measures + ["measure_daylightavg"],
+                "measures": vessel_scoring.colspec.Colspec.measures + ["measure_daylight"]
+                },
+            order=6),
+        'data': ['kristina_ps'] + ['slow-transits'] * 10},
+
+    'Logistic opt MSE':       {'model': vessel_scoring.logistic_model.LogisticModel(colspec=colspec, order=4, cross=3), 'data': all_data},
+    'Random Forest':          {'model': vessel_scoring.random_forest_model.RandomForestModel(windows=vessel_scoring.colspec.Colspec.windows), 'data': all_data},
+    'Legacy':                 {'model': vessel_scoring.legacy_heuristic_model.LegacyHeuristicModel(window=3600), 'data': all_data},
+    "Legacy (12 Hour)":       {'model': vessel_scoring.legacy_heuristic_model.LegacyHeuristicModel(window=43200), 'data': all_data},
+
+#     'Logistic (MW)':        {'model': vessel_scoring.logistic_model.LogisticModel(windows=[1800, 3600, 10800, 21600, 43200, 86400], order=6), 'data': all_data},
+#     'Logistic (MW/cross3)': {'model': vessel_scoring.logistic_model.LogisticModel(windows=[1800, 3600, 10800, 21600, 43200, 86400], order=6, cross=2), 'data': all_data},
+#     'Random Forest (MW)':   {'model': vessel_scoring.random_forest_model.RandomForestModel(windows=[1800, 3600, 10800, 21600, 43200, 86400]), 'data': all_data},
+#     "Legacy (3 Hour)":      {'model': vessel_scoring.legacy_heuristic_model.LegacyHeuristicModel(window=10800), 'data': all_data},
+#     "Legacy (24 Hour)":     {'model': vessel_scoring.legacy_heuristic_model.LegacyHeuristicModel(window=86400),   'data': all_data},
+}
+
+def load_data():
+    datasets = {}
+    for filename in os.listdir("datasets"):
+        if filename.endswith('.measures.npz'):
+            name = filename[:-len('.measures.npz')]
+            datasets[name] = dict(zip(['all', 'train', 'cross', 'test'], vessel_scoring.data.load_dataset_by_vessel('datasets/' + filename)))
+    return datasets
+
+def train_model(name, spec, dataset):
+    print "Training %s..." % name
+    training_data = ([dataset[name]['train']
+                      for name in spec['data']]
+                     + [dataset[name]['cross']
+                        for name in spec['data']])
+    training_data = vessel_scoring.utils.concatenate_different_recarrays(training_data)
+    return vessel_scoring.evaluate_model.train_model(spec['model'], training_data)
 
 models_path = os.path.join(os.path.dirname(__file__), "models")
 
@@ -47,17 +73,17 @@ def train_models(models = None, train = None, save=True):
     if models is None:
         models = untrained_models
     if train is None:
-        train = get_default_training_data()
-    trained_models = [(name, vessel_scoring.evaluate_model.train_model(mdl, train))
-                      for (name, mdl) in models]
+        train = load_data()
+    trained_models = {name: train_model(name, spec, train)
+                      for (name, spec) in models.iteritems()}
     if save:
         if not os.path.exists(models_path):
             os.mkdir(models_path)
-        for (name, model) in trained_models:
-            if hasattr(model, 'dump_dict'):
+        for (name, model) in trained_models.iteritems():
+            res = model.dump_dict()
+            if res is not None:
                 with open(os.path.join(models_path, "%s.json" % name), "w") as f:
-                    model_class = type(model)
-                    json.dump(model.dump_dict(), f)
+                    json.dump(res, f)
     return trained_models
 
 

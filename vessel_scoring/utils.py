@@ -64,13 +64,15 @@ def fishy(x):
 def nonfishy(x):
     return x[~is_fishy(x)]
 
-def get_polynomial_cols(x, windows):
-    colnames = []
-    #colnames.append("speed")
+default_window_measures = ["measure_speedavg", "measure_speedstddev", "measure_coursestddev"]
+default_measures = [] # ["speed"]
+
+def get_polynomial_cols(x, windows, window_measures = default_window_measures, measures = default_measures):
+    colnames = list(measures)
+
     for window in windows:
-        colnames.append('measure_speedavg_%s' % window)
-        colnames.append('measure_speedstddev_%s_log' % window)
-        colnames.append('measure_coursestddev_%s_log' % window)
+        for measure in window_measures:
+            colnames.append('%s_%s' % (measure, window))
 
     cols = [x[col] for col in colnames]
 
@@ -133,3 +135,8 @@ def messages_to_numpy(messages, length):
     for name in fields:
         res[name][:] = fields[name]
     return res
+
+def concatenate_different_recarrays(arrs):
+    names = list(set.intersection(*[set(arr.dtype.names) for arr in arrs]))
+    return numpy.concatenate([arr[names] for arr in arrs])
+            

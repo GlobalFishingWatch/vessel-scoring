@@ -1,3 +1,5 @@
+
+from __future__ import print_function, division
 import numpy as np
 import numpy.lib.recfunctions
 import os.path
@@ -61,7 +63,8 @@ def _subsample_even(x0, mmsi, n):
     f = fishy(x)
     nf = nonfishy(x)
     if n//2 > len(f) or n//2 > len(nf):
-        print "Warning, inufficient items to sample, returning fewer"
+        print("Warning, inufficient items to sample, returning fewer",
+              file=sys.stderr)
     f = np.random.choice(f, min(n//2, len(f)), replace=False)
     nf = np.random.choice(nf, min(n//2, len(nf)), replace=False)
     ss = np.concatenate([f, nf])
@@ -85,7 +88,8 @@ def _subsample_proportional(x0, mmsi, n):
     # Pick values randomly
     # Pick values randomly
     if n > len(x):
-        print "Warning, inufficient items to sample, returning", len(x)
+        print("Warning, inufficient items to sample, returning", len(x),
+               file=sys.stderr)
         n = len(x)
     ss = np.random.choice(x, n, replace=False)
     np.random.shuffle(ss)
@@ -110,7 +114,7 @@ def add_log_measures(x):
     return np.lib.recfunctions.append_fields(x, 'score', [],
                                     dtypes='<f8', fill_value=0.0)
 
-def load_dataset_by_vessel(path, size = 20000, even_split=True, seed=4321):
+def load_dataset_by_vessel(path, size = 20000, even_split=None, seed=4321):
     """Load a dataset from `path` and return train, valid and test sets
 
     path - path to the dataset
@@ -139,13 +143,15 @@ def load_dataset_by_vessel(path, size = 20000, even_split=True, seed=4321):
     x = x[~np.isinf(x['classification']) & ~np.isnan(x['classification']) & ~np.isnan(x['timestamp']) & ~np.isnan(x['speed']) & ~np.isnan(x['course'])]
 
     if size > len(x):
-        print "Warning, insufficient items to sample, returning all"
+        print("Warning, insufficient items to sample, returning all")
         size = len(x)
 
     # Get the list of MMSI and shuffle them. The compute the cumulative
     # lengths so that we can divide the points ~ evenly. Use search
     # sorted to find the division points
     mmsi = list(set(x['mmsi']))
+    if even_split is None:
+        even_split = x['classification'].sum() > 1 and x['classification'].sum() < len(x)
     if even_split:
         base_mmsi = mmsi
         # Exclude mmsi that don't have at least one fishing or nonfishing point
@@ -165,8 +171,14 @@ def load_dataset_by_vessel(path, size = 20000, even_split=True, seed=4321):
 
     train_subsample = _subsample_even if even_split else _subsample_proportional
 
-    xtrain = train_subsample(x, mmsi[:n1], size//2)
-    xcross = _subsample_proportional(x, mmsi[n1:n2], size//4)
-    xtest = _subsample_proportional(x, mmsi[n2:], size//4)
+    try:
+        xtrain = train_subsample(x, mmsi[:n1], size//2)
+        xcross = _subsample_proportional(x, mmsi[n1:n2], size//4)
+        xtest = _subsample_proportional(x, mmsi[n2:], size//4)
+    except Exception as e:
+        print("Warning: broken data in", path, file=sys.stderr)
+        import pdb, sys
+        sys.last_traceback = sys.exc_info()[2]
+        pdb.set_trace()
 
     return x, xtrain, xcross, xtest

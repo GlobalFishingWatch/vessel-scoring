@@ -19,11 +19,14 @@ class BaseModel(object):
             yield msg
         
     def dump_arg_dict(self):
-        return {}
+        return None
 
     def dump_dict(self):
+        args = self.dump_arg_dict()
+        if args is None:
+            return None
         model_class = type(self)
         return {'model': "%s.%s" % (model_class.__module__, model_class.__name__),
-                'args': self.dump_arg_dict(),
+                'args': args,
                 }
 

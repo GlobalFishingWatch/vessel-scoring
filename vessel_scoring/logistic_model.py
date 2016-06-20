@@ -2,14 +2,14 @@ import numpy as np
 from sklearn.linear_model import LogisticRegression
 from vessel_scoring.utils import get_polynomial_cols, zigmoid
 import vessel_scoring.base_model
+import vessel_scoring.colspec
 
-def make_features(data, windows, order, cross):
-    base = np.array(get_polynomial_cols(data, windows))
-    n_base_cols = len(base)
+def make_features(base_cols, order, cross):
+    n_base_cols = len(base_cols)
     cols = []
     for total_order in range(1, order+1):
         for i in range(n_base_cols):
-            cols.append(base[i]**total_order)
+            cols.append(base_cols[i]**total_order)
         if total_order <= cross:
             for i in range(n_base_cols):
                 for j in range(i+1, n_base_cols):
@@ -19,8 +19,8 @@ def make_features(data, windows, order, cross):
                         # sub_order ranges from 1-total_order-1
                         # so only when i==j do we get columns
                         # with total order.
-                        cols.append(base[i] ** sub_order *
-                                    base[j] ** (total_order - sub_order))
+                        cols.append(base_cols[i] ** sub_order *
+                                    base_cols[j] ** (total_order - sub_order))
     chunks = [x.reshape(-1,1) for x in cols]
     return np.concatenate(chunks, axis=1)
 
@@ -28,7 +28,7 @@ def make_features(data, windows, order, cross):
 class LogisticModel(LogisticRegression, vessel_scoring.base_model.BaseModel):
 
     def __init__(self, coef=None, intercept=None, order=4, cross=0,
-                        windows=['3600'], random_state=4321):
+                        colspec={}, random_state=4321):
         """
 
         The first to arguments are here to make interface consistent
@@ -39,7 +39,7 @@ class LogisticModel(LogisticRegression, vessel_scoring.base_model.BaseModel):
 
         order - maximum order of polynomial terms
         cross - maximum order of cross terms (2 is minimum for any effect)
-        windows - list of window sizes to use in features
+        colspec - specification of what cols to use
 
         Note that this uses only cross terms from two features at
         a time.
@@ -48,7 +48,7 @@ class LogisticModel(LogisticRegression, vessel_scoring.base_model.BaseModel):
         assert order >= 2, "order must be at least 2"
         self.order = order
         self.cross = cross
-        self.windows = windows
+        self.colspec = vessel_scoring.colspec.Colspec(**colspec)
         if coef is not None:
             self.coef_ = np.array(coef)
         if intercept is not None:
@@ -66,12 +66,14 @@ class LogisticModel(LogisticRegression, vessel_scoring.base_model.BaseModel):
 
     def _make_features(self, data):
         """Convert dataset into feature matrix suitable for model"""
-        return make_features(data, self.windows, self.order, self.cross)
+        return make_features(
+            np.array(self.colspec.get_cols(data)),
+            self.order, self.cross)
 
     def dump_arg_dict(self):
         return {'coef' : [list(item) for item in self.coef_],
                 'intercept' : list(self.intercept_),
-                'windows' : list(self.windows),
+                'colspec' : self.colspec.dump_arg_dict(),
                 'order' : self.order,
                 'cross' : self.cross}
 
@@ -84,12 +86,12 @@ class LogisticScorer(vessel_scoring.base_model.BaseModel):
     line, where we wouldn't be able to do that with sklearn.
     """
 
-    def __init__(self, coef, intercept, order, cross, windows):
+    def __init__(self, coef, intercept, order, cross, colspec):
         self.coef = coef
         self.intercept = intercept
         self.order = order
         self.cross = cross
-        self.windows = windows
+        self.colspec = colspec
 
     def predict(self, X):
         """predict is_fishing based on feature vector `X`"""
@@ -113,5 +115,7 @@ class LogisticScorer(vessel_scoring.base_model.BaseModel):
 
     def _make_features(self, data):
         """Convert dataset into feature matrix suitable for model"""
-        return make_features(data, self.windows, self.order, self.cross)
+        return make_features(
+            np.array(self.colspec.get_cols(data)),
+            self.order, self.cross)
 

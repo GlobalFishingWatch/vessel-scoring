@@ -38,7 +38,7 @@ untrained_models = {
         'data': ['kristina_ps'] + ['slow-transits'] * 10},
 
     'Logistic opt MSE':       {'model': vessel_scoring.logistic_model.LogisticModel(colspec=colspec, order=4, cross=3), 'data': all_data},
-    'Random Forest':          {'model': vessel_scoring.random_forest_model.RandomForestModel(windows=vessel_scoring.colspec.Colspec.windows), 'data': all_data},
+    'Random Forest':          {'model': vessel_scoring.random_forest_model.RandomForestModel(colspec=colspec), 'data': all_data},
     'Legacy':                 {'model': vessel_scoring.legacy_heuristic_model.LegacyHeuristicModel(window=3600), 'data': all_data},
     "Legacy (12 Hour)":       {'model': vessel_scoring.legacy_heuristic_model.LegacyHeuristicModel(window=43200), 'data': all_data},
 
@@ -103,7 +103,7 @@ def train_models(models = None, train = None, save=True):
 
 def load_models():
     res = {}
-    
+
     for filename in os.listdir(models_path):
         with open(os.path.join(models_path, filename)) as f:
             conf = json.load(f)

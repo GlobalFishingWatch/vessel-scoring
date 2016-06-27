@@ -115,7 +115,7 @@ def numpy_to_messages(arr):
             if np.isnan(value) or np.isinf(value):
                 res[key] = None
         if res.get('timestamp') is not None:
-            res['timestamp'] = datetime.datetime.fromtimestamp(res['timestamp'])
+            res['timestamp'] = datetime.datetime.utcfromtimestamp(res['timestamp'])
         return res
     return (convert_row(row) for row in arr)
 
@@ -139,4 +139,4 @@ def messages_to_numpy(messages, length):
 def concatenate_different_recarrays(arrs):
     names = list(set.intersection(*[set(arr.dtype.names) for arr in arrs]))
     return numpy.concatenate([arr[names] for arr in arrs])
-            
+

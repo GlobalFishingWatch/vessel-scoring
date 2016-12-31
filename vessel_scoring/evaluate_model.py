@@ -102,10 +102,39 @@ def compare_models_at_cutoff(models, test_data, predictions = None):
                 metrics.f1_score(actual, pred)))
     display(Markdown('\n'.join(lines)))
 
-def compare_models(models, test_data):
+def compare_metrics(models, test_data, threshold=0.5):
+    labels = utils.is_fishy(test_data)
+    for (name, mdl) in models:
+        predicted = (mdl.predict_proba(test_data)[:,1] > threshold)
+        print(name)
+        print(metrics.classification_report(labels, predicted))
+
+
+def compare_metrics_table(models, test_data, threshold=0.5, cell_width=20):
+    labels = utils.is_fishy(test_data)
+    items = []
+    items.append(['', 'Precision', 'Recall', 'F1-score'])
+    items.append(['-' * cell_width] * 4)
+    for (name, mdl) in models:
+        predicted = (mdl.predict_proba(test_data)[:,1] > threshold)
+        precision = metrics.precision_score(labels, predicted)
+        recall = metrics.recall_score(labels, predicted)
+        f1 =  metrics.f1_score(labels, predicted)
+        row = [name]
+        row += ["{:.3f}".format(x) for x in [precision, recall, f1]]
+        items.append(row)
+    text = ''
+    for row in items:
+        text += ('|' + '|'.join('{0:^{1}}'.format(x, cell_width) for x in row) + '|\n')
+    return text
+
+
+def compare_auc(models, test_data):
+    import matplotlib.pyplot as plt
+
     is_fishy = utils.is_fishy(test_data)
 
-    f, (a1, a2) = plt.subplots(2, 1, figsize=(20,20))
+    f, a1 = plt.subplots(1, 1, figsize=(8,4))
 
     if isinstance(models, dict):
         models = models.items()
@@ -118,8 +147,19 @@ def compare_models(models, test_data):
         a1.plot(fpr, tpr, label='{0}: {1:.3f} AUC'.format(name, auc))
     a1.set_xlabel('False Positive Rate')
     a1.set_ylabel('True Positive Rate')
+    a1.set_xlim(0,1)
+    a1.set_ylim(0,1)
     a1.legend(loc="lower right")
     a1.set_ylim(0, 1)
+
+    plt.show()
+
+def compare_pr(models, test_data):
+    import matplotlib.pyplot as plt
+
+    is_fishy = utils.is_fishy(test_data)
+
+    f, (a2) = plt.subplots(1, 1, figsize=(8,4))
 
     for (name, mdl) in models:
         score = mdl.predict_proba(test_data)[:,1]
@@ -127,6 +167,8 @@ def compare_models(models, test_data):
         a2.plot(recalls, precisions, label='{0}'.format(name))
     a2.set_xlabel('Recall')
     a2.set_ylabel('Precision')
+    a2.set_xlim(0,1)
+    a2.set_ylim(0,1)
     a2.legend(loc="lower right")
     a2.set_ylim(0, 1)
 

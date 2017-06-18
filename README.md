@@ -18,6 +18,34 @@ It also contains some tools to deal with the data formats of some of our partner
 * Kristinas CSV-based format
 * Alex' and Chris' fishing-hour sidecar format
 
+## Docker
+
+To run a Jupyter notebook:
+
+`$DATADIR` is the path to the directory storing the necessary data files
+
+```
+DATADIR=$HOME/datasets
+
+tree $DATADIR
+datasets
+├── classified-filtered.measures.npz
+├── false_positives.measures.npz
+├── kristina_longliner.measures.npz
+├── kristina_ps.measures.npz
+└── kristina_trawl.measures.npz
+
+docker pull etheleon/pirates:latest
+docker run --rm -it
+    -v $HOME:/w \
+    -v $DATADIR:/w/datasets
+    -w /w \
+    -p 8888:8888 etheleon/pirates:latest \
+    jupyter notebook --no-browser --ip="*" --allow-root
+```
+
+Then go to `http://<DOCKER-MACHINE-IP>:8888`
+
 ## API
 
     import vessel_scoring.models

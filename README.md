@@ -35,12 +35,12 @@ datasets
 ├── kristina_ps.measures.npz
 └── kristina_trawl.measures.npz
 
-docker pull etheleon/pirates:latest
+docker pull quay.io/dksg/gfw-vessel-scoring:latest
 docker run --rm -it
     -v $HOME:/w \
     -v $DATADIR:/w/datasets
     -w /w \
-    -p 8888:8888 etheleon/pirates:latest \
+    -p 8888:8888 quay.io/dksg/gfw-vessel-scoring:latest \
     jupyter notebook --no-browser --ip="*" --allow-root
 ```
 

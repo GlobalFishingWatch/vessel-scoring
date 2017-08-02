@@ -36,9 +36,9 @@ datasets
 └── kristina_trawl.measures.npz
 
 docker pull quay.io/dksg/gfw-vessel-scoring:latest
-docker run --rm -it
+docker run --rm -it \
     -v $HOME:/w \
-    -v $DATADIR:/w/datasets
+    -v $DATADIR:/w/datasets \
     -w /w \
     -p 8888:8888 quay.io/dksg/gfw-vessel-scoring:latest \
     jupyter notebook --no-browser --ip="*" --allow-root

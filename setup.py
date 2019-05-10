@@ -8,6 +8,14 @@ from distutils.command.build import build
 import os.path
 import sys
 
+DEPENDENCIES = [
+    "numpy",
+    "scikit-learn==0.20",
+    "scipy",
+    "rolling_measures"
+]
+
+
 class BuildModelsCommand(distutils.core.Command):
     description = "Train models and save the model parameters to file"
     user_options = []
@@ -44,7 +52,7 @@ distutils.core.setup(
     ],
     package_data={
         'vessel_scoring': ['models/*']},
-    install_requires=["numpy", "scikit-learn", "scipy", "rolling_measures"],
+    install_requires=DEPENDENCIES,
     extras_require={
         'dev': ['matplotlib', 'ipython', 'coveralls']},
     version='1.0',

@@ -10,7 +10,7 @@ import sys
 
 DEPENDENCIES = [
     "numpy",
-    "scikit-learn==0.20",
+    "scikit-learn==0.20.0",
     "scipy",
     "rolling_measures"
 ]

@@ -60,5 +60,5 @@ distutils.core.setup(
     author_email='egil@skytruth.org, tim@skytruth.org',
     url='',
     license='Apache',
-    cmdclass=cmdclass
+#    cmdclass=cmdclass
 )

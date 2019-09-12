@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 
 import os.path
-import distutils.core
-import distutils.command.build
-
-from distutils.command.build import build
+from setuptools import find_packages
+from setuptools import setup
 import os.path
 import sys
 
@@ -43,22 +41,33 @@ cmdclass['build_models'] = BuildModelsCommand
 cmdclass['build'] = build
 
 
-distutils.core.setup(
+# distutils.core.setup(
+#     name='vessel-scoring',
+#     description="Tools to score fishing behavior of vessels",
+#     long_description='',
+#     packages=[
+#         'vessel_scoring',
+#     ],
+#     # package_data={
+#     #     'vessel_scoring': ['models/*']},
+#     install_requires=DEPENDENCIES,
+#     # extras_require={
+#     #     'dev': ['matplotlib', 'ipython', 'coveralls']},
+#     version='1.01',
+#     # author='Egil Moeller, Timothy Hochberg',
+#     # author_email='egil@skytruth.org, tim@skytruth.org',
+#     # url='',
+#     # license='Apache',
+# #    cmdclass=cmdclass
+# )
+
+setup(
     name='vessel-scoring',
-    description="Tools to score fishing behavior of vessels",
-    long_description='',
-    packages=[
-        'vessel_scoring',
-    ],
-    # package_data={
-    #     'vessel_scoring': ['models/*']},
-    install_requires=DEPENDENCIES,
-    # extras_require={
-    #     'dev': ['matplotlib', 'ipython', 'coveralls']},
-    version='1.01',
-    author='Egil Moeller, Timothy Hochberg',
-    author_email='egil@skytruth.org, tim@skytruth.org',
-    url='',
-    license='Apache',
-#    cmdclass=cmdclass
+    version='1.0.1',
+    description='Tools to score fishing behavior of vessels',
+    author="Global Fishing Watch",
+    author_email="info@globalfishingwatch.org",
+    license="Apache 2",
+    packages=find_packages(),
+    install_requires=DEPENDENCIES 
 )

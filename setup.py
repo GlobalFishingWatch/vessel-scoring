@@ -50,8 +50,8 @@ distutils.core.setup(
     packages=[
         'vessel_scoring',
     ],
-    package_data={
-        'vessel_scoring': ['models/*']},
+    # package_data={
+    #     'vessel_scoring': ['models/*']},
     install_requires=DEPENDENCIES,
     # extras_require={
     #     'dev': ['matplotlib', 'ipython', 'coveralls']},

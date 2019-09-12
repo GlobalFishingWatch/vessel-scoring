@@ -45,7 +45,7 @@ cmdclass['build'] = build
 
 distutils.core.setup(
     name='vessel-scoring',
-    description="Tools to score fishing behviour of vessels",
+    description="Tools to score fishing behavior of vessels",
     long_description='',
     packages=[
         'vessel_scoring',
@@ -53,9 +53,9 @@ distutils.core.setup(
     package_data={
         'vessel_scoring': ['models/*']},
     install_requires=DEPENDENCIES,
-    extras_require={
-        'dev': ['matplotlib', 'ipython', 'coveralls']},
-    version='1.1',
+    # extras_require={
+    #     'dev': ['matplotlib', 'ipython', 'coveralls']},
+    version='1.01',
     author='Egil Moeller, Timothy Hochberg',
     author_email='egil@skytruth.org, tim@skytruth.org',
     url='',

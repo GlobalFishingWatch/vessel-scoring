@@ -1,6 +1,5 @@
-python scripts/add_measures.py datasets/slow-transits.npz datasets/slow-transits.measures.npz 0
-python scripts/add_measures.py datasets/new_transits.npz datasets/new_transits.measures.npz 0
+python scripts/add_measures.py datasets/false_positives_class_pruned.npz datasets/false_positives_class_pruned.measures.npz 0
 
-python scripts/add_measures.py datasets/kristina_trawl.npz datasets/kristina_trawl.measures.npz
-python scripts/add_measures.py datasets/kristina_ps.npz datasets/kristina_ps.measures.npz
-python scripts/add_measures.py datasets/kristina_longliner.npz datasets/kristina_longliner.measures.npz
+python scripts/add_measures.py datasets/kristina_trawl_class_pruned.npz datasets/kristina_trawl_class_pruned.measures.npz
+python scripts/add_measures.py datasets/kristina_ps_class_pruned.npz datasets/kristina_ps_class_pruned.measures.npz
+python scripts/add_measures.py datasets/kristina_longliner_class_pruned.npz datasets/kristina_longliner_class_pruned.measures.npz

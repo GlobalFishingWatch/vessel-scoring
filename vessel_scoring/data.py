@@ -2,12 +2,12 @@ import numpy as np
 import numpy.lib.recfunctions
 import os.path
 import math
-import scipy.optimize
 import sys
 import warnings
 from vessel_scoring.utils import *
 
-def load_dataset(path, size = 20000):
+
+def load_dataset(path, size=20000):
     # Load a dataset and extract a train, cross validation and test dataset
     #
     # * We need roughly the same amount of fishing and non-fishing
@@ -18,32 +18,47 @@ def load_dataset(path, size = 20000):
     # * We add the log of the stddev columns, since their values are
     #   exponentially distributed
 
-    x = np.load(path)['x']
-    x = x[~np.isinf(x['classification']) & ~np.isnan(x['classification']) & ~np.isnan(x['timestamp']) & ~np.isnan(x['speed']) & ~np.isnan(x['course'])]
+    x = np.load(path)["x"]
+    x = x[
+        ~np.isinf(x["classification"])
+        & ~np.isnan(x["classification"])
+        & ~np.isnan(x["timestamp"])
+        & ~np.isnan(x["speed"])
+        & ~np.isnan(x["course"])
+    ]
 
     all_windows = get_windows(x)
 
     for window in all_windows:
-        x = np.lib.recfunctions.append_fields(x, 'measure_speedstddev_%s_log' % window, [], dtypes='<f8', fill_value=0.0)
-        x['measure_speedstddev_%s_log' % window] = np.log10(x['measure_speedstddev_%s' % window]+0.001)
+        x = np.lib.recfunctions.append_fields(
+            x, "measure_speedstddev_%s_log" % window, [], dtypes="<f8", fill_value=0.0
+        )
+        x["measure_speedstddev_%s_log" % window] = np.log10(
+            x["measure_speedstddev_%s" % window] + 0.001
+        )
 
-        x = np.lib.recfunctions.append_fields(x, 'measure_coursestddev_%s_log' % window, [], dtypes='<f8', fill_value=0.0)
-        x['measure_coursestddev_%s_log' % window] = np.log10(x['measure_coursestddev_%s' % window]+0.001)
+        x = np.lib.recfunctions.append_fields(
+            x, "measure_coursestddev_%s_log" % window, [], dtypes="<f8", fill_value=0.0
+        )
+        x["measure_coursestddev_%s_log" % window] = np.log10(
+            x["measure_coursestddev_%s" % window] + 0.001
+        )
 
-    x = np.lib.recfunctions.append_fields(x, 'score', [], dtypes='<f8', fill_value=0.0)
+    x = np.lib.recfunctions.append_fields(x, "score", [], dtypes="<f8", fill_value=0.0)
 
     xuse = numpy.copy(x)
     np.random.shuffle(xuse)
-    size = min(fishy(xuse).shape[0], nonfishy(xuse).shape[0], size/2)
+    size = min(fishy(xuse).shape[0], nonfishy(xuse).shape[0], size / 2)
     xuse = np.concatenate((fishy(xuse)[:size], nonfishy(xuse)[:size]))
     np.random.shuffle(xuse)
 
     length = xuse.shape[0]
-    xtrain = xuse[:length / 2]
-    xcross = xuse[length/2:length*3/4]
-    xtest = xuse[length*3/4:]
+    xtrain = xuse[: length / 2]
+    xcross = xuse[length / 2 : length * 3 / 4]
+    xtest = xuse[length * 3 / 4 :]
 
     return x, xtrain, xcross, xtest
+
 
 def _subsample_even(x0, mmsi, n):
     """Return `n` subsamples from `x0`
@@ -56,18 +71,19 @@ def _subsample_even(x0, mmsi, n):
     # passed in
     mask = np.zeros([len(x0)], dtype=bool)
     for m in mmsi:
-        mask |= (x0['mmsi'] == m)
+        mask |= x0["mmsi"] == m
     x = x0[mask]
     # Pick half the values from fishy rows and half from nonfishy rows.
     f = fishy(x)
     nf = nonfishy(x)
-    if n//2 > len(f) or n//2 > len(nf):
+    if n // 2 > len(f) or n // 2 > len(nf):
         warnings.warn("inufficient items to sample, returning fewer")
-    f = np.random.choice(f, min(n//2, len(f)), replace=False)
-    nf = np.random.choice(nf, min(n//2, len(nf)), replace=False)
+    f = np.random.choice(f, min(n // 2, len(f)), replace=False)
+    nf = np.random.choice(nf, min(n // 2, len(nf)), replace=False)
     ss = np.concatenate([f, nf])
     np.random.shuffle(ss)
     return ss
+
 
 def _subsample_proportional(x0, mmsi, n):
     """Return `n` subsamples from `x0`
@@ -81,37 +97,43 @@ def _subsample_proportional(x0, mmsi, n):
     # passed in
     mask = np.zeros([len(x0)], dtype=bool)
     for m in mmsi:
-        mask |= (x0['mmsi'] == m)
+        mask |= x0["mmsi"] == m
     x = x0[mask]
     # Pick values randomly
     # Pick values randomly
     if n > len(x):
-        warnings.warn("Warning, inufficient items to sample, returning {}".format(len(x)))
+        warnings.warn(
+            "Warning, inufficient items to sample, returning {}".format(len(x))
+        )
         n = len(x)
     ss = np.random.choice(x, n, replace=False)
     np.random.shuffle(ss)
     return ss
 
+
 def add_log_measures(x):
-    """Add log versions of each of speedstddev and coursestdev
-    """
+    """Add log versions of each of speedstddev and coursestdev"""
     all_windows = get_windows(x)
     for window in all_windows:
-        x = np.lib.recfunctions.append_fields(x,
-                'measure_speedstddev_%s_log' % window, [],
-                 dtypes='<f8', fill_value=0.0)
-        x['measure_speedstddev_%s_log' % window] = np.log10(
-                x['measure_speedstddev_%s' % window]+0.001)
+        x = np.lib.recfunctions.append_fields(
+            x, "measure_speedstddev_%s_log" % window, [], dtypes="<f8", fill_value=0.0
+        )
+        x["measure_speedstddev_%s_log" % window] = np.log10(
+            x["measure_speedstddev_%s" % window] + 0.001
+        )
 
-        x = np.lib.recfunctions.append_fields(x,
-                'measure_coursestddev_%s_log' % window, [],
-                dtypes='<f8', fill_value=0.0)
-        x['measure_coursestddev_%s_log' % window] = np.log10(
-                x['measure_coursestddev_%s' % window]+0.001)
-    return np.lib.recfunctions.append_fields(x, 'score', [],
-                                    dtypes='<f8', fill_value=0.0)
+        x = np.lib.recfunctions.append_fields(
+            x, "measure_coursestddev_%s_log" % window, [], dtypes="<f8", fill_value=0.0
+        )
+        x["measure_coursestddev_%s_log" % window] = np.log10(
+            x["measure_coursestddev_%s" % window] + 0.001
+        )
+    return np.lib.recfunctions.append_fields(
+        x, "score", [], dtypes="<f8", fill_value=0.0
+    )
 
-def load_dataset_by_vessel(path, size = 20000, even_split=None, seed=4321):
+
+def load_dataset_by_vessel(path, size=20000, even_split=None, seed=4321):
     """Load a dataset from `path` and return train, valid and test sets
 
     path - path to the dataset
@@ -136,8 +158,14 @@ def load_dataset_by_vessel(path, size = 20000, even_split=None, seed=4321):
 
     # Load the dataset and strip out any points that aren't classified
     # (has classification == Inf)
-    x = np.load(path)['x']
-    x = x[~np.isinf(x['classification']) & ~np.isnan(x['classification']) & ~np.isnan(x['timestamp']) & ~np.isnan(x['speed']) & ~np.isnan(x['course'])]
+    x = np.load(path)["x"]
+    x = x[
+        ~np.isinf(x["classification"])
+        & ~np.isnan(x["classification"])
+        & ~np.isnan(x["timestamp"])
+        & ~np.isnan(x["speed"])
+        & ~np.isnan(x["course"])
+    ]
 
     if size > len(x):
         print("Warning, insufficient items to sample, returning all")
@@ -146,35 +174,38 @@ def load_dataset_by_vessel(path, size = 20000, even_split=None, seed=4321):
     # Get the list of MMSI and shuffle them. The compute the cumulative
     # lengths so that we can divide the points ~ evenly. Use search
     # sorted to find the division points
-    mmsi = list(set(x['mmsi']))
+    mmsi = list(set(x["mmsi"]))
     if even_split is None:
-        even_split = x['classification'].sum() > 1 and x['classification'].sum() < len(x)
+        even_split = x["classification"].sum() > 1 and x["classification"].sum() < len(
+            x
+        )
     if even_split:
         base_mmsi = mmsi
         # Exclude mmsi that don't have at least one fishing or nonfishing point
         mmsi = []
         for m in base_mmsi:
-            subset = x[x['mmsi'] == m]
-            fishing_count = subset['classification'].sum()
+            subset = x[x["mmsi"] == m]
+            fishing_count = subset["classification"].sum()
             if fishing_count == 0 or fishing_count == len(subset):
                 continue
             mmsi.append(m)
     np.random.shuffle(mmsi)
     nx = len(x)
-    sums = np.cumsum([(x['mmsi'] == m).sum() for m in mmsi])
-    n1, n2 = np.searchsorted(sums, [nx//2, 3*nx//4])
+    sums = np.cumsum([(x["mmsi"] == m).sum() for m in mmsi])
+    n1, n2 = np.searchsorted(sums, [nx // 2, 3 * nx // 4])
     if n2 == n1:
         n2 += 1
 
     train_subsample = _subsample_even if even_split else _subsample_proportional
 
     try:
-        xtrain = train_subsample(x, mmsi[:n1], size//2)
-        xcross = _subsample_proportional(x, mmsi[n1:n2], size//4)
-        xtest = _subsample_proportional(x, mmsi[n2:], size//4)
+        xtrain = train_subsample(x, mmsi[:n1], size // 2)
+        xcross = _subsample_proportional(x, mmsi[n1:n2], size // 4)
+        xtest = _subsample_proportional(x, mmsi[n2:], size // 4)
     except Exception as e:
         print("Broken data in", path)
         import pdb, sys
+
         sys.last_traceback = sys.exc_info()[2]
         pdb.set_trace()
 
